@@ -37,13 +37,16 @@ android {
 
 // Chaquopy: embeds a Python interpreter so .py spiders run on-device.
 // Wheels are fetched from Chaquopy's own Maven repo at build time.
-python {
-    pip {
-        install "requests"
-        install "lxml"
-        install "beautifulsoup4"
-        install "pyquery"
-        install "pycryptodome"
+// (v15+ renamed the DSL block from `python` to `chaquopy`.)
+chaquopy {
+    defaultConfig {
+        pip {
+            install "requests"
+            install "lxml"
+            install "beautifulsoup4"
+            install "pyquery"
+            install "pycryptodome"
+        }
     }
 }
 
