@@ -165,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
                 .setSingleChoiceItems(names, checked, (d, which) -> {
                     current = config.sites.get(which);
                     Prefs.siteKey(this, current.key);
-                    siteName.setText(current.name);
+                    siteName.setText(current.name + " \u00b7 \u9996\u9875");
                     d.dismiss();
                     loadHome();
                 })
@@ -250,7 +250,7 @@ public class MainActivity extends AppCompatActivity {
                             break;
                         }
                     }
-                    siteName.setText(current.name);
+                    siteName.setText(current.name + " \u00b7 \u9996\u9875");
                     loadHome();
                 });
             } catch (Exception e) {

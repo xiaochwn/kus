@@ -2,7 +2,6 @@ package com.boxzero.app.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -48,8 +47,8 @@ public class RecordsActivity extends AppCompatActivity {
         BottomNav.setup(this, isHistory ? BottomNav.TAB_HISTORY : BottomNav.TAB_FAV);
 
         TextView title = findViewById(R.id.title);
-        title.setText(isHistory ? "历史记录" : "我的收藏");
-        setTitle(isHistory ? "历史记录" : "我的收藏");
+        title.setText(isHistory ? "历史" : "收藏");
+        setTitle(isHistory ? "历史" : "收藏");
 
         grid = findViewById(R.id.grid);
         if (isHistory) {
@@ -79,7 +78,7 @@ public class RecordsActivity extends AppCompatActivity {
         }
         refresh();
 
-        Button clear = findViewById(R.id.btnClear);
+        android.widget.ImageButton clear = findViewById(R.id.btnClear);
         clear.setOnClickListener(v -> {
             if (isHistory) HistoryStore.clear(this);
             else FavStore.clear(this);

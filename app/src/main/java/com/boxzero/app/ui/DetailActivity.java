@@ -101,6 +101,14 @@ srcRow.setAdapter(srcAdapter);
 findViewById(R.id.btnBack).setOnClickListener(v -> finish());
 findViewById(R.id.btnPlay).setOnClickListener(v -> playDefault());
 btnStar.setOnClickListener(v -> toggleFav());
+findViewById(R.id.btnMusic).setOnClickListener(v ->
+        Toast.makeText(this, "暂无主题曲资源", Toast.LENGTH_SHORT).show());
+findViewById(R.id.btnCast).setOnClickListener(v ->
+        Toast.makeText(this, "投屏功能即将上线", Toast.LENGTH_SHORT).show());
+findViewById(R.id.btnFollow).setOnClickListener(v -> toggleFav());
+findViewById(R.id.btnAll).setOnClickListener(v -> showAllEpisodes());
+TextView srcFrom = findViewById(R.id.srcFrom);
+srcFrom.setText("来源： " + (site.name != null && !site.name.isEmpty() ? site.name : siteKey));
 btnExpand.setOnClickListener(v -> {
 expanded =!expanded;
 contentView.setMaxLines(expanded? Integer.MAX_VALUE: 3);
@@ -214,6 +222,34 @@ epGrid.addView(b);
 }
 
 /** Big play button: resume last-watched episode if any, else the first one. */
+private void showAllEpisodes() {
+    if (sources.isEmpty()) return;
+    List<Vod.Ep> eps = new ArrayList<>(sources.get(srcIndex).eps);
+    if (reversed) Collections.reverse(eps);
+    android.widget.ScrollView sv = new android.widget.ScrollView(this);
+    GridLayout grid = new GridLayout(this);
+    grid.setColumnCount(3);
+    int pad = (int) (16 * getResources().getDisplayMetrics().density);
+    grid.setPadding(pad, pad, pad, pad);
+    for (Vod.Ep ep : eps) {
+        Button b = new Button(this);
+        b.setText(ep.name);
+        b.setAllCaps(false);
+        GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
+        lp.width = 0;
+        lp.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+        lp.setMargins(6, 6, 6, 6);
+        b.setLayoutParams(lp);
+        b.setOnClickListener(v -> play(sources.get(srcIndex).name, ep));
+        grid.addView(b);
+    }
+    sv.addView(grid);
+    new androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("选集")
+            .setView(sv)
+            .setPositiveButton("关闭", null)
+            .show();
+}
 private void playDefault() {
 if (sources.isEmpty()) return;
 Vod.Src src = sources.get(srcIndex);
