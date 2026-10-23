@@ -10,9 +10,12 @@ public class Prefs {
     private static final String K_CONFIG = "config_url";
     private static final String K_SITE = "site_key";
 
-    /** Demo config bundled via the repo: install-and-play, no typing needed. */
-    public static final String DEFAULT_CONFIG =
-            "https://cdn.jsdelivr.net/gh/xiaochwn/kus@main/demo/config.json";
+    /**
+     * Empty means "use the built-in demo source" (assets/demo copied to
+     * filesDir on first launch, fully offline). A non-empty value is a
+     * user-supplied TVBox-style config URL.
+     */
+    public static final String DEFAULT_CONFIG = "";
 
     private static SharedPreferences prefs(Context ctx) {
         return ctx.getApplicationContext().getSharedPreferences(FILE, Context.MODE_PRIVATE);

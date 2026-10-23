@@ -54,6 +54,11 @@ public class SpiderLoader {
         try {
             String api = site.api == null ? "" : site.api;
             String ext = site.ext == null ? "" : site.ext;
+            // "@demo/..." -> filesDir/demo/... (built-in offline demo source)
+            if (api.startsWith("@demo/")) {
+                api = new java.io.File(new java.io.File(appContext.getFilesDir(), "demo"),
+                        api.substring(6)).getAbsolutePath();
+            }
             Spider spider;
             if (site.isPy()) {
                 spider = new PySpider(appContext, site.key, api, ext, ProxyServer.get().baseUrl());

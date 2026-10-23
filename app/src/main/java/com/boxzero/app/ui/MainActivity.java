@@ -92,14 +92,16 @@ public class MainActivity extends AppCompatActivity {
     private void loadConfig() {
         String url = Prefs.configUrl(this);
         lastUrl = url;
-        if (url.isEmpty()) {
-            startActivity(new Intent(this, SettingsActivity.class));
-            return;
-        }
         setLoading(true);
         io.execute(() -> {
             try {
-                BoxConfig cfg = BoxConfig.load(url);
+                BoxConfig cfg;
+                if (url.isEmpty()) {
+                    // Built-in demo source: fully offline, no network needed.
+                    cfg = BoxConfig.loadFromFile(new java.io.File(getFilesDir(), "demo/config.json"));
+                } else {
+                    cfg = BoxConfig.load(url);
+                }
                 SpiderLoader.get().setConfig(cfg);
                 main.post(() -> {
                     setLoading(false);

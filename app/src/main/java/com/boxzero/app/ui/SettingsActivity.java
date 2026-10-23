@@ -24,12 +24,8 @@ public class SettingsActivity extends AppCompatActivity {
         Button save = findViewById(R.id.btnSave);
         save.setOnClickListener(v -> {
             String url = input.getText().toString().trim();
-            if (url.isEmpty()) {
-                Toast.makeText(this, "请填写接口地址", Toast.LENGTH_SHORT).show();
-                return;
-            }
             Prefs.configUrl(this, url);
-            Toast.makeText(this, "已保存", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, url.isEmpty() ? "已切换为内置演示源" : "已保存", Toast.LENGTH_SHORT).show();
             finish();
         });
     }
