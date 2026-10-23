@@ -12,7 +12,7 @@ public class Prefs {
 
     /** Demo config bundled via the repo: install-and-play, no typing needed. */
     public static final String DEFAULT_CONFIG =
-            "https://raw.githubusercontent.com/xiaochwn/kus/main/demo/config.json";
+            "https://cdn.jsdelivr.net/gh/xiaochwn/kus@main/demo/config.json";
 
     private static SharedPreferences prefs(Context ctx) {
         return ctx.getApplicationContext().getSharedPreferences(FILE, Context.MODE_PRIVATE);

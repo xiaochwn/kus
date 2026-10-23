@@ -1,4 +1,6 @@
-"""BoxZero 演示 py 爬虫：纯静态数据，验证整条链路（加载/分类/详情/搜索/播放）。
+"""BoxZero 演示 py 爬虫：静态演示数据，验证整条链路（加载/分类/详情/搜索/播放）。
+
+视频与海报都托管在本仓库 demo/ 目录，经 jsDelivr CDN 分发，国内可直接访问。
 
 在 BoxZero 里这样写爬虫即可：
     from boxzero.base.spider import Spider
@@ -7,27 +9,25 @@
 
 from boxzero.base.spider import Spider
 
-BUCKET = 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample'
+CDN = 'https://cdn.jsdelivr.net/gh/xiaochwn/kus@main/demo'
 
 VIDEOS = [
-    {'id': 'bbb', 'name': 'Big Buck Bunny', 'pic': 'https://picsum.photos/seed/bbb/300/400',
-     'remarks': '10分钟 · 动画', 'url': BUCKET + '/BigBuckBunny.mp4',
-     'desc': '一只大兔子对三只小啮齿动物的复仇喜剧。Blender 基金会开放电影。'},
-    {'id': 'ed', 'name': 'Elephants Dream', 'pic': 'https://picsum.photos/seed/ed/300/400',
-     'remarks': '11分钟 · 科幻', 'url': BUCKET + '/ElephantsDream.mp4',
-     'desc': '两个男人在一台无限大的机器里穿行，探讨现实与幻觉。首部开放电影。'},
-    {'id': 'sintel', 'name': 'Sintel', 'pic': 'https://picsum.photos/seed/sintel/300/400',
-     'remarks': '15分钟 · 奇幻', 'url': BUCKET + '/Sintel.mp4',
-     'desc': '女孩 Sintel 寻找她的小火龙，穿越冰雪荒原的冒险。'},
-    {'id': 'tos', 'name': 'Tears of Steel', 'pic': 'https://picsum.photos/seed/tos/300/400',
-     'remarks': '12分钟 · 科幻', 'url': BUCKET + '/TearsOfSteel.mp4',
-     'desc': '阿姆斯特丹，机器人与人类的未来战争。Blender 基金会第四部开放电影。'},
-    {'id': 'blazes', 'name': 'For Bigger Blazes', 'pic': 'https://picsum.photos/seed/blazes/300/400',
-     'remarks': '15秒 · 广告', 'url': BUCKET + '/ForBiggerBlazes.mp4',
-     'desc': 'Google Chromecast 演示短片。'},
-    {'id': 'escapes', 'name': 'For Bigger Escapes', 'pic': 'https://picsum.photos/seed/escapes/300/400',
-     'remarks': '15秒 · 广告', 'url': BUCKET + '/ForBiggerEscapes.mp4',
-     'desc': 'Google Chromecast 演示短片。'},
+    {'id': 'bunny', 'name': 'Big Buck Bunny（演示）',
+     'pic': CDN + '/posters/p1.jpg', 'remarks': '10秒 · 动画',
+     'url': CDN + '/videos/bunny.mp4',
+     'desc': 'Blender 基金会开放电影 Big Buck Bunny 片段。'},
+    {'id': 'jellyfish', 'name': 'Jellyfish（演示）',
+     'pic': CDN + '/posters/p2.jpg', 'remarks': '10秒 · 自然',
+     'url': CDN + '/videos/jellyfish.mp4',
+     'desc': '水母 4K 测试片段。'},
+    {'id': 'flower', 'name': 'Flower（演示）',
+     'pic': CDN + '/posters/p3.jpg', 'remarks': '短片 · 自然',
+     'url': CDN + '/videos/flower.mp4',
+     'desc': 'MDN 示例视频：一朵花的延时摄影。'},
+    {'id': 'sintel', 'name': 'Sintel 预告（演示）',
+     'pic': CDN + '/posters/p4.jpg', 'remarks': '预告 · 奇幻',
+     'url': CDN + '/videos/sintel_trailer.mp4',
+     'desc': 'Blender 基金会开放电影 Sintel 官方预告。'},
 ]
 
 
@@ -73,4 +73,4 @@ class Spider(Spider):
         return self.result([self.vod(v['id'], v['name'], v['pic'], v['remarks']) for v in hit])
 
     def playerContent(self, flag, id, vipFlags):
-        return {'parse': 0, 'url': id, 'header': {'Referer': 'https://commondatastorage.googleapis.com/'}}
+        return {'parse': 0, 'url': id, 'header': {}}
