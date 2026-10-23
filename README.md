@@ -65,17 +65,17 @@ class Spider(Spider):
 1. 在 GitHub 新建空仓库，把本目录推上去
 2. push 到 main 自动构建，产物 `BoxZero-apk`（debug 包，30 天有效）
 
-## 已有功能（v0.4）
+## 已有功能（v0.52）
 
-- 首页推荐 / 分类 Tab + 分页 / 搜索 / 详情 / 选集 / 播放（ExoPlayer）
+- 首页：轮播 banner（自动滚动）、全部分类胶囊、推荐横滑海报墙、顶部搜索栏、源切换
+- 分类页（网格 + 翻页）、搜索页、详情页（选集 + 收藏星标）、播放页（ExoPlayer）
 - 解析：直连、`parses` 拼接/JSON 解析、WebView 嗅探（`parse:1` 兜底）
-- 播放历史（自动记录，点击续播）/ 收藏（详情页星标）
-- 直播：`lives`（txt / m3u / JSON 数组），无直播源时用内置演示频道
+- 播放历史（自动记录，点击续播）/ 收藏 / 直播（txt / m3u / JSON）/ 我的（接口设置）
+- 毛玻璃底部导航：首页 / 收藏 / 历史 / 直播 / 我的
 - py spider + jar spider（csp_*）、本地代理（localProxy）
 
 ## TODO（v1 之后）
 
-- UI 重做（现在只是能用的素颜版）
 - XPath 站点（type 0）和采集站（type 1）
 - 选集记忆（看到第几集）
 - TMDB 刮削补海报简介

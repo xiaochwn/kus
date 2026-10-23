@@ -16,7 +16,8 @@ public class SettingsActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_settings);
-        setTitle("设置");
+        setTitle("我的");
+        BottomNav.setup(this, BottomNav.TAB_MINE);
 
         EditText input = findViewById(R.id.configInput);
         input.setText(Prefs.configUrl(this));

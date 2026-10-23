@@ -41,6 +41,7 @@ public class LiveActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_live);
         setTitle("直播");
+        BottomNav.setup(this, BottomNav.TAB_LIVE);
 
         groupSpinner = findViewById(R.id.groupSpinner);
         channelList = findViewById(R.id.channelList);

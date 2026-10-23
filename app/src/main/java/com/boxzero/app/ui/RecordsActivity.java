@@ -39,6 +39,7 @@ public class RecordsActivity extends AppCompatActivity {
 
         String mode = getIntent().getStringExtra(EXTRA_MODE);
         boolean isHistory = MODE_HISTORY.equals(mode);
+        BottomNav.setup(this, isHistory ? BottomNav.TAB_HISTORY : BottomNav.TAB_FAV);
 
         TextView title = findViewById(R.id.title);
         title.setText(isHistory ? "历史记录" : "我的收藏");
