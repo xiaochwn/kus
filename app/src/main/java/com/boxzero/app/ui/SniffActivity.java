@@ -84,6 +84,9 @@ public class SniffActivity extends AppCompatActivity {
         it.putExtra("url", videoUrl);
         it.putExtra("headers", getIntent().getStringExtra("headers"));
         it.putExtra("title", getIntent().getStringExtra("title"));
+        it.putExtra("siteKey", getIntent().getStringExtra("siteKey"));
+        it.putExtra("vodId", getIntent().getStringExtra("vodId"));
+        it.putExtra("epUrl", getIntent().getStringExtra("epUrl"));
         startActivity(it);
         finish();
     }

@@ -10,6 +10,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
 import androidx.media3.ui.PlayerView;
 
 import com.boxzero.app.R;
+import com.boxzero.app.core.HistoryStore;
 
 import org.json.JSONObject;
 
@@ -21,6 +22,9 @@ public class PlayerActivity extends AppCompatActivity {
 
     private ExoPlayer player;
     private PlayerView playerView;
+    private String recSiteKey = "";
+    private String recVodId = "";
+    private String recEpUrl = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -32,6 +36,10 @@ public class PlayerActivity extends AppCompatActivity {
         String headersJson = getIntent().getStringExtra("headers");
         String title = getIntent().getStringExtra("title");
         if (title != null) setTitle(title);
+        // History record keys for progress tracking (may be absent for live TV).
+        if (getIntent().getStringExtra("siteKey") != null) recSiteKey = getIntent().getStringExtra("siteKey");
+        if (getIntent().getStringExtra("vodId") != null) recVodId = getIntent().getStringExtra("vodId");
+        if (getIntent().getStringExtra("epUrl") != null) recEpUrl = getIntent().getStringExtra("epUrl");
 
         Map<String, String> headers = parseHeaders(headersJson);
         DefaultHttpDataSource.Factory httpFactory = new DefaultHttpDataSource.Factory()
@@ -65,7 +73,28 @@ public class PlayerActivity extends AppCompatActivity {
     @Override
     protected void onStop() {
         super.onStop();
+        saveProgress();
         if (player != null) player.pause();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        saveProgress();
+    }
+
+    /** Persists playback progress into the history record. */
+    private void saveProgress() {
+        if (player == null || recEpUrl.isEmpty()) return;
+        try {
+            long pos = player.getCurrentPosition();
+            long dur = player.getDuration();
+            if (dur < 0) dur = 0;
+            // Treat "finished" as fully watched.
+            if (dur > 0 && dur - pos < 5000) pos = dur;
+            HistoryStore.updateProgress(this, recSiteKey, recVodId, recEpUrl, pos, dur);
+        } catch (Exception ignored) {
+        }
     }
 
     @Override

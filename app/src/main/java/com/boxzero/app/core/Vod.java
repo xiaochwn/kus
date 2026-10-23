@@ -33,6 +33,21 @@ public class Vod {
     @SerializedName("vod_play_url")
     public String vodPlayUrl = "";
 
+    @SerializedName("vod_year")
+    public String vodYear = "";
+
+    @SerializedName("vod_area")
+    public String vodArea = "";
+
+    @SerializedName("vod_actor")
+    public String vodActor = "";
+
+    @SerializedName("vod_director")
+    public String vodDirector = "";
+
+    @SerializedName("vod_class")
+    public String vodClass = "";
+
     public static class Src {
         public String name = "";
         public final List<Ep> eps = new ArrayList<>();

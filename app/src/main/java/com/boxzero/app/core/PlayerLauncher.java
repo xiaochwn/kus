@@ -36,6 +36,15 @@ public class PlayerLauncher {
     private static final Handler MAIN = new Handler(Looper.getMainLooper());
 
     public static void play(Activity activity, Site site, String flag, String epUrl, String title) {
+        play(activity, site, flag, epUrl, title, "", "", "");
+    }
+
+    /**
+     * @param siteKey/vodId/epUrlOfRecord history record keys for progress tracking;
+     *                                    empty when not applicable (e.g. live TV).
+     */
+    public static void play(Activity activity, Site site, String flag, String epUrl, String title,
+                            String siteKey, String vodId, String epUrlOfRecord) {
         Toast.makeText(activity.getApplicationContext(), "解析中…", Toast.LENGTH_SHORT).show();
         IO.execute(() -> {
             try {
@@ -49,15 +58,15 @@ public class PlayerLauncher {
                 if (parse == 1) {
                     String direct = tryParse(site, url);
                     if (direct != null && isVideoUrl(direct)) {
-                        launchPlayer(activity, direct, header, title);
+                        launchPlayer(activity, direct, header, title, siteKey, vodId, epUrlOfRecord);
                         return;
                     }
                     String sniffUrl = direct != null ? direct : firstParseTarget(site, url);
                     if (sniffUrl == null) throw new Exception("无可用解析接口");
-                    launchSniff(activity, sniffUrl, header, title);
+                    launchSniff(activity, sniffUrl, header, title, siteKey, vodId, epUrlOfRecord);
                     return;
                 }
-                launchPlayer(activity, url, header, title);
+                launchPlayer(activity, url, header, title, siteKey, vodId, epUrlOfRecord);
             } catch (Exception e) {
                 e.printStackTrace();
                 MAIN.post(() -> Toast.makeText(activity.getApplicationContext(),
@@ -125,22 +134,30 @@ public class PlayerLauncher {
         }
     }
 
-    private static void launchPlayer(Activity activity, String url, String headers, String title) {
+    private static void launchPlayer(Activity activity, String url, String headers, String title,
+                                     String siteKey, String vodId, String epUrlOfRecord) {
         MAIN.post(() -> {
             Intent it = new Intent(activity, PlayerActivity.class);
             it.putExtra("url", url);
             it.putExtra("headers", headers);
             it.putExtra("title", title);
+            it.putExtra("siteKey", siteKey);
+            it.putExtra("vodId", vodId);
+            it.putExtra("epUrl", epUrlOfRecord);
             activity.startActivity(it);
         });
     }
 
-    private static void launchSniff(Activity activity, String url, String headers, String title) {
+    private static void launchSniff(Activity activity, String url, String headers, String title,
+                                    String siteKey, String vodId, String epUrlOfRecord) {
         MAIN.post(() -> {
             Intent it = new Intent(activity, SniffActivity.class);
             it.putExtra("url", url);
             it.putExtra("headers", headers);
             it.putExtra("title", title);
+            it.putExtra("siteKey", siteKey);
+            it.putExtra("vodId", vodId);
+            it.putExtra("epUrl", epUrlOfRecord);
             activity.startActivity(it);
         });
     }

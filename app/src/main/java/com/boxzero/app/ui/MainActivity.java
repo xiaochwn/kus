@@ -46,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     private TextView siteName;
     private RecyclerView banner;
     private TextView bannerTitle;
+    private TextView bannerScore;
     private LinearLayout dots;
     private RecyclerView pillRow;
     private RecyclerView posterRow;
@@ -89,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
         siteName = findViewById(R.id.siteName);
         banner = findViewById(R.id.banner);
         bannerTitle = findViewById(R.id.bannerTitle);
+        bannerScore = findViewById(R.id.bannerScore);
         dots = findViewById(R.id.dots);
         pillRow = findViewById(R.id.pillRow);
         posterRow = findViewById(R.id.posterRow);
@@ -195,11 +197,20 @@ public class MainActivity extends AppCompatActivity {
         int count = bannerAdapter.getItemCount();
         if (count == 0) {
             bannerTitle.setText("");
+            bannerScore.setVisibility(View.GONE);
             dots.removeAllViews();
             return;
         }
         Vod vod = bannerAdapter.get(bannerPos % count);
         bannerTitle.setText(vod.vodName == null ? "" : vod.vodName);
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("\\d+\\.\\d+")
+                .matcher(vod.vodRemarks == null ? "" : vod.vodRemarks);
+        if (m.find()) {
+            bannerScore.setVisibility(View.VISIBLE);
+            bannerScore.setText("评分 " + m.group());
+        } else {
+            bannerScore.setVisibility(View.GONE);
+        }
         dots.removeAllViews();
         for (int i = 0; i < count; i++) {
             ImageView dot = new ImageView(this);

@@ -32,6 +32,7 @@ public class BottomNav {
             int color = sel ? Color.parseColor("#2E7CE6") : Color.parseColor("#8A8A8A");
             icon.setColorFilter(color);
             text.setTextColor(color);
+            tab.setBackgroundResource(sel ? R.drawable.tab_selected : 0);
             final int idx = i;
             tab.setOnClickListener(v -> go(activity, idx, selected));
         }

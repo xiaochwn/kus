@@ -6,12 +6,14 @@ import android.os.Looper;
 import android.view.View;
 import android.widget.Button;
 import android.widget.GridLayout;
+import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.boxzero.app.R;
 import com.boxzero.app.core.FavStore;
@@ -35,237 +37,292 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/** Detail page in AVBox style: backdrop, big play button, source cards, episodes. */
 public class DetailActivity extends AppCompatActivity {
 
-    private ImageView poster;
-    private TextView title, remarks, content;
-    private Button btnFav;
-    private LinearLayout srcRow;
-    private GridLayout epGrid;
+private ImageView backdrop;
+private TextView titleView;
+private TextView metaView;
+private TextView tagsView;
+private TextView contentView;
+private TextView btnExpand;
+private RecyclerView srcRow;
+private GridLayout epGrid;
+private TextView btnReverse;
+private ImageButton btnStar;
 
-    private final ExecutorService io = Executors.newSingleThreadExecutor();
-    private final Handler main = new Handler(Looper.getMainLooper());
-    private final Gson gson = new Gson();
+private SrcCardAdapter srcAdapter;
 
-    private Site site;
-    private String siteKey;
-    private String vodId;
-    private Vod vod;
-    private List<Vod.Src> sources = new ArrayList<>();
+private final ExecutorService io = Executors.newSingleThreadExecutor();
+private final Handler main = new Handler(Looper.getMainLooper());
+private final Gson gson = new Gson();
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_detail);
+private Site site;
+private String siteKey;
+private String vodId;
+private Vod vod;
+private List<Vod.Src> sources = new ArrayList<>();
+private int srcIndex = 0;
+private boolean reversed = false;
+private boolean expanded = false;
 
-        poster = findViewById(R.id.poster);
-        title = findViewById(R.id.title);
-        remarks = findViewById(R.id.remarks);
-        content = findViewById(R.id.content);
-        btnFav = findViewById(R.id.btnFav);
-        srcRow = findViewById(R.id.srcRow);
-        epGrid = findViewById(R.id.epGrid);
+@Override
+protected void onCreate(Bundle savedInstanceState) {
+super.onCreate(savedInstanceState);
+setContentView(R.layout.activity_detail);
 
-        siteKey = getIntent().getStringExtra("siteKey");
-        vodId = getIntent().getStringExtra("vodId");
-        site = SpiderLoader.get().getConfig().find(siteKey);
-        if (site == null) {
-            finish();
-            return;
-        }
+backdrop = findViewById(R.id.backdrop);
+titleView = findViewById(R.id.title);
+metaView = findViewById(R.id.meta);
+tagsView = findViewById(R.id.tags);
+contentView = findViewById(R.id.content);
+btnExpand = findViewById(R.id.btnExpand);
+srcRow = findViewById(R.id.srcRow);
+epGrid = findViewById(R.id.epGrid);
+btnReverse = findViewById(R.id.btnReverse);
+btnStar = findViewById(R.id.btnStar);
 
-        btnFav.setOnClickListener(v -> toggleFav());
-        Button btnTmdb = findViewById(R.id.btnTmdb);
-        if (!Prefs.tmdbKey(this).isEmpty()) {
-            btnTmdb.setVisibility(View.VISIBLE);
-            btnTmdb.setOnClickListener(v -> tmdbEnrich(true));
-        }
-        loadDetail(vodId);
-    }
+siteKey = getIntent().getStringExtra("siteKey");
+vodId = getIntent().getStringExtra("vodId");
+site = SpiderLoader.get().getConfig().find(siteKey);
+if (site == null) {
+finish();
+return;
+}
 
-    private void loadDetail(String vodId) {
-        io.execute(() -> {
-            try {
-                Spider spider = SpiderLoader.get().spider(site);
-                String json = spider.detailContent(Collections.singletonList(vodId));
-                JSONObject o = new JSONObject(json);
-                JSONArray arr = o.optJSONArray("list");
-                if (arr != null && arr.length() > 0) {
-                    vod = gson.fromJson(arr.getJSONObject(0).toString(), Vod.class);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            main.post(this::render);
-        });
-    }
+srcRow.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false));
+srcAdapter = new SrcCardAdapter(idx -> {
+srcIndex = idx;
+srcAdapter.setSelected(idx);
+renderEpisodes();
+});
+srcRow.setAdapter(srcAdapter);
 
-    private void render() {
-        if (vod == null) {
-            Toast.makeText(this, "详情加载失败", Toast.LENGTH_SHORT).show();
-            finish();
-            return;
-        }
-        title.setText(vod.vodName);
-        remarks.setText(vod.vodRemarks == null ? "" : vod.vodRemarks);
-        content.setText(vod.vodContent == null ? "" : vod.vodContent.replaceAll("<.*?>", ""));
-        Glide.with(this).load(vod.vodPic).into(poster);
-        refreshFavButton();
+findViewById(R.id.btnBack).setOnClickListener(v -> finish());
+findViewById(R.id.btnPlay).setOnClickListener(v -> playDefault());
+btnStar.setOnClickListener(v -> toggleFav());
+btnExpand.setOnClickListener(v -> {
+expanded =!expanded;
+contentView.setMaxLines(expanded? Integer.MAX_VALUE: 3);
+btnExpand.setText(expanded? "收起 ▴": "展开 ▾");
+});
+btnReverse.setOnClickListener(v -> {
+reversed =!reversed;
+btnReverse.setText(reversed? "↑ 正序": "↓ 倒序");
+renderEpisodes();
+});
 
-        // Auto-fill missing poster/synopsis from TMDB when a key is set.
-        if (!Prefs.tmdbKey(this).isEmpty()) {
-            boolean picEmpty = vod.vodPic == null || vod.vodPic.isEmpty();
-            String ct = vod.vodContent == null ? "" : vod.vodContent.replaceAll("<.*?>", "").trim();
-            if (picEmpty || ct.isEmpty()) tmdbEnrich(false);
-        }
+loadDetail(vodId);
+}
 
-        sources = vod.parseSources();
-        srcRow.removeAllViews();
-        for (int i = 0; i < sources.size(); i++) {
-            Vod.Src src = sources.get(i);
-            Button b = new Button(this);
-            b.setText(src.name);
-            b.setAllCaps(false);
-            int idx = i;
-            b.setOnClickListener(v -> renderEpisodes(idx));
-            srcRow.addView(b);
-        }
-        if (!sources.isEmpty()) renderEpisodes(0);
-    }
+private void loadDetail(String vodId) {
+io.execute(() -> {
+try {
+Spider spider = SpiderLoader.get().spider(site);
+String json = spider.detailContent(Collections.singletonList(vodId));
+JSONObject o = new JSONObject(json);
+JSONArray arr = o.optJSONArray("list");
+if (arr!= null && arr.length() > 0) {
+vod = gson.fromJson(arr.getJSONObject(0).toString(), Vod.class);
+}
+} catch (Exception e) {
+e.printStackTrace();
+}
+main.post(this::render);
+});
+}
 
-    private void refreshFavButton() {
-        boolean faved = FavStore.isFav(this, siteKey, vodId);
-        btnFav.setText(faved ? "★ 已收藏" : "☆ 收藏");
-    }
+private void render() {
+if (vod == null) {
+Toast.makeText(this, "详情加载失败", Toast.LENGTH_SHORT).show();
+finish();
+return;
+}
+titleView.setText(vod.vodName == null? "": vod.vodName);
 
-    private void toggleFav() {
-        if (vod == null) return;
-        FavStore.Item item = new FavStore.Item();
-        item.siteKey = siteKey;
-        item.vodId = vodId;
-        item.vodName = vod.vodName;
-        item.vodPic = vod.vodPic;
-        boolean nowFaved = FavStore.toggle(this, item);
-        refreshFavButton();
-        Toast.makeText(this, nowFaved ? "已收藏" : "已取消收藏", Toast.LENGTH_SHORT).show();
-    }
+String meta = join(" · ", vod.vodYear, vod.vodArea);
+metaView.setText(meta);
+metaView.setVisibility(meta.isEmpty()? View.GONE: View.VISIBLE);
 
-    private void renderEpisodes(int srcIndex) {
-        epGrid.removeAllViews();
-        Vod.Src src = sources.get(srcIndex);
-        for (Vod.Ep ep : src.eps) {
-            Button b = new Button(this);
-            b.setText(ep.name);
-            b.setAllCaps(false);
-            GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
-            lp.width = 0;
-            lp.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
-            b.setLayoutParams(lp);
-            b.setOnClickListener(v -> play(src.name, ep));
-            epGrid.addView(b);
-        }
-    }
+String tags = vod.vodClass == null? "": vod.vodClass.replace(",", " · ").trim();
+tagsView.setText(tags);
+tagsView.setVisibility(tags.isEmpty()? View.GONE: View.VISIBLE);
 
-    private void play(String flag, Vod.Ep ep) {
-        HistoryStore.Record r = new HistoryStore.Record();
-        r.siteKey = siteKey;
-        r.vodId = vodId;
-        r.vodName = vod.vodName;
-        r.vodPic = vod.vodPic;
-        r.flag = flag;
-        r.epName = ep.name;
-        r.epUrl = ep.url;
-        HistoryStore.add(this, r);
-        PlayerLauncher.play(this, site, flag, ep.url, vod.vodName + " " + ep.name);
-    }
+String text = vod.vodContent == null? "": vod.vodContent.replaceAll("<.*?>", "").trim();
+contentView.setText(text.isEmpty()? "暂无简介": text);
 
-    // ---------- TMDB scraping (silent) ----------
-    //
-    // Runs quietly in the background after the detail page loads: if the
-    // poster or synopsis is missing and a TMDB key is set, the best-matching
-    // TMDB entry fills them in. No toasts, no dialogs — failures are ignored.
+Glide.with(this).load(vod.vodPic).centerCrop().into(backdrop);
+refreshStar();
 
-    /** Auto-enrich when poster or synopsis is missing; manual via the TMDB button. */
-    private void tmdbEnrich(boolean force) {
-        String key = Prefs.tmdbKey(this);
-        if (key.isEmpty() || vod == null) return;
-        io.execute(() -> {
-            try {
-                String query = cleanTitle(vod.vodName);
-                if (query.isEmpty()) return;
-                String year = extractYear(vod.vodName + " " + vod.vodRemarks);
-                List<Tmdb.Result> results = Tmdb.search(key, query, year);
-                if (results.isEmpty() && !year.isEmpty()) {
-                    results = Tmdb.search(key, query, "");
-                }
-                if (results.isEmpty()) return;
-                Tmdb.Result best = bestMatch(results, query);
-                if (best == null) return;
-                Tmdb.Result finalBest = best;
-                main.post(() -> applyTmdb(finalBest, force));
-            } catch (Exception ignored) {
-                // Silent: leave the page as-is.
-            }
-        });
-    }
+sources = vod.parseSources();
+srcAdapter.setItems(sources);
+srcIndex = 0;
+renderEpisodes();
 
-    /** Picks the most likely correct entry without asking the user. */
-    private static Tmdb.Result bestMatch(List<Tmdb.Result> results, String query) {
-        String q = query.toLowerCase();
-        for (Tmdb.Result r : results) {
-            if (r.title.equalsIgnoreCase(query) || r.originalTitle.equalsIgnoreCase(query)) return r;
-        }
-        for (Tmdb.Result r : results) {
-            String t = r.title.toLowerCase();
-            if (!t.isEmpty() && (t.contains(q) || q.contains(t))) return r;
-        }
-        for (Tmdb.Result r : results) {
-            if (!r.posterPath.isEmpty() && !r.overview.isEmpty()) return r;
-        }
-        return results.isEmpty() ? null : results.get(0);
-    }
+// Silent TMDB enrichment for missing poster/synopsis.
+if (!Prefs.tmdbKey(this).isEmpty()) {
+boolean picEmpty = vod.vodPic == null || vod.vodPic.isEmpty();
+if (picEmpty || text.isEmpty()) tmdbEnrich();
+}
+}
 
-    private void applyTmdb(Tmdb.Result r, boolean force) {
-        if (vod == null) return;
-        boolean picEmpty = vod.vodPic == null || vod.vodPic.isEmpty();
-        String contentText = vod.vodContent == null ? "" : vod.vodContent.replaceAll("<.*?>", "").trim();
-        String posterUrl = Tmdb.posterUrl(r.posterPath);
-        if ((picEmpty || force) && !posterUrl.isEmpty()) {
-            vod.vodPic = posterUrl;
-            Glide.with(this).load(posterUrl).into(poster);
-        }
-        if ((contentEmpty(contentText) || force) && !r.overview.isEmpty()) {
-            vod.vodContent = r.overview;
-            content.setText(r.overview);
-        }
-        if (r.voteAverage > 0) {
-            String score = "★ " + String.format(java.util.Locale.US, "%.1f", r.voteAverage);
-            String cur = remarks.getText().toString();
-            if (!cur.contains("★")) {
-                remarks.setText(cur.isEmpty() ? score : cur + " · " + score);
-            }
-        }
-    }
+private static String join(String sep, String... parts) {
+StringBuilder sb = new StringBuilder();
+for (String p: parts) {
+if (p!= null &&!p.trim().isEmpty()) {
+if (sb.length() > 0) sb.append(sep);
+sb.append(p.trim());
+}
+}
+return sb.toString();
+}
 
-    private static boolean contentEmpty(String s) {
-        return s == null || s.trim().isEmpty();
-    }
+private void refreshStar() {
+boolean faved = FavStore.isFav(this, siteKey, vodId);
+btnStar.setColorFilter(faved? 0xFF8B5E34: 0xFF8A8A8A);
+}
 
-    private static String cleanTitle(String name) {
-        if (name == null) return "";
-        // Strip trailing "(...)" / "[...]" decorations for better search hits.
-        return name.replaceAll("[(\\[（【][^)\\]）】]*$", "").trim();
-    }
+private void toggleFav() {
+if (vod == null) return;
+FavStore.Item item = new FavStore.Item();
+item.siteKey = siteKey;
+item.vodId = vodId;
+item.vodName = vod.vodName;
+item.vodPic = vod.vodPic;
+boolean nowFaved = FavStore.toggle(this, item);
+refreshStar();
+Toast.makeText(this, nowFaved? "已收藏": "已取消收藏", Toast.LENGTH_SHORT).show();
+}
 
-    private static String extractYear(String text) {
-        if (text == null) return "";
-        java.util.regex.Matcher m = java.util.regex.Pattern.compile("(19|20)\\d{2}").matcher(text);
-        return m.find() ? m.group() : "";
-    }
+private void renderEpisodes() {
+epGrid.removeAllViews();
+if (sources.isEmpty()) return;
+List<Vod.Ep> eps = new ArrayList<>(sources.get(srcIndex).eps);
+if (reversed) Collections.reverse(eps);
+for (Vod.Ep ep: eps) {
+Button b = new Button(this);
+b.setText(ep.name);
+b.setAllCaps(false);
+GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
+lp.width = 0;
+lp.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+lp.setMargins(4, 4, 4, 4);
+b.setLayoutParams(lp);
+b.setOnClickListener(v -> play(sources.get(srcIndex).name, ep));
+epGrid.addView(b);
+}
+}
 
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        io.shutdownNow();
-    }
+/** Big play button: resume last-watched episode if any, else the first one. */
+private void playDefault() {
+if (sources.isEmpty()) return;
+Vod.Src src = sources.get(srcIndex);
+if (src.eps.isEmpty()) return;
+// Resume?
+for (HistoryStore.Record r: HistoryStore.list(this)) {
+if (r.siteKey.equals(siteKey) && r.vodId.equals(vodId)) {
+for (Vod.Ep ep: src.eps) {
+if (ep.url.equals(r.epUrl)) {
+play(src.name, ep);
+return;
+}
+}
+break;
+}
+}
+play(src.name, src.eps.get(0));
+}
+
+private void play(String flag, Vod.Ep ep) {
+HistoryStore.Record r = new HistoryStore.Record();
+r.siteKey = siteKey;
+r.vodId = vodId;
+r.vodName = vod.vodName;
+r.vodPic = vod.vodPic;
+r.flag = flag;
+r.epName = ep.name;
+r.epUrl = ep.url;
+HistoryStore.add(this, r);
+PlayerLauncher.play(this, site, flag, ep.url, vod.vodName + " " + ep.name,
+siteKey, vodId, ep.url);
+}
+
+// ---------- TMDB scraping (silent) ----------
+
+private void tmdbEnrich() {
+String key = Prefs.tmdbKey(this);
+if (key.isEmpty() || vod == null) return;
+io.execute(() -> {
+try {
+String query = cleanTitle(vod.vodName);
+if (query.isEmpty()) return;
+String year = extractYear(vod.vodName + " " + vod.vodRemarks);
+List<Tmdb.Result> results = Tmdb.search(key, query, year);
+if (results.isEmpty() &&!year.isEmpty()) {
+results = Tmdb.search(key, query, "");
+}
+if (results.isEmpty()) return;
+Tmdb.Result best = bestMatch(results, query);
+if (best == null) return;
+Tmdb.Result finalBest = best;
+main.post(() -> applyTmdb(finalBest));
+} catch (Exception ignored) {
+}
+});
+}
+
+private static Tmdb.Result bestMatch(List<Tmdb.Result> results, String query) {
+String q = query.toLowerCase();
+for (Tmdb.Result r: results) {
+if (r.title.equalsIgnoreCase(query) || r.originalTitle.equalsIgnoreCase(query)) return r;
+}
+for (Tmdb.Result r: results) {
+String t = r.title.toLowerCase();
+if (!t.isEmpty() && (t.contains(q) || q.contains(t))) return r;
+}
+for (Tmdb.Result r: results) {
+if (!r.posterPath.isEmpty() &&!r.overview.isEmpty()) return r;
+}
+return results.isEmpty()? null: results.get(0);
+}
+
+private void applyTmdb(Tmdb.Result r) {
+if (vod == null) return;
+boolean picEmpty = vod.vodPic == null || vod.vodPic.isEmpty();
+String contentText = vod.vodContent == null? "": vod.vodContent.replaceAll("<.*?>", "").trim();
+String posterUrl = Tmdb.posterUrl(r.posterPath);
+if (picEmpty &&!posterUrl.isEmpty()) {
+vod.vodPic = posterUrl;
+Glide.with(this).load(posterUrl).centerCrop().into(backdrop);
+}
+if (contentText.isEmpty() &&!r.overview.isEmpty()) {
+vod.vodContent = r.overview;
+contentView.setText(r.overview);
+}
+if (r.voteAverage > 0) {
+String score = "★ " + String.format(java.util.Locale.US, "%.1f", r.voteAverage);
+String cur = metaView.getText().toString();
+if (!cur.contains("★")) {
+metaView.setText(cur.isEmpty()? score: cur + " · " + score);
+metaView.setVisibility(View.VISIBLE);
+}
+}
+}
+
+private static String cleanTitle(String name) {
+if (name == null) return "";
+return name.replaceAll("[(\\[（]*$", "").trim();
+}
+
+private static String extractYear(String text) {
+if (text == null) return "";
+java.util.regex.Matcher m = java.util.regex.Pattern.compile("(19|20)\\d{2}").matcher(text);
+return m.find()? m.group(): "";
+}
+
+@Override
+protected void onDestroy() {
+super.onDestroy();
+io.shutdownNow();
+}
 }

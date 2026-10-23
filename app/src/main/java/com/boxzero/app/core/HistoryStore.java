@@ -24,6 +24,9 @@ public class HistoryStore {
         public String epName = "";
         public String epUrl = "";
         public long time;
+        /** Playback progress in ms; duration<=0 means unknown. */
+        public long position;
+        public long duration;
     }
 
     private static final String FILE = "history.json";
@@ -61,6 +64,22 @@ public class HistoryStore {
     public static synchronized void clear(Context ctx) {
         // noinspection ResultOfMethodCallIgnored
         new File(ctx.getFilesDir(), FILE).delete();
+    }
+
+    /** Updates playback progress for an existing record (matched by episode). */
+    public static synchronized void updateProgress(Context ctx, String siteKey, String vodId,
+                                                  String epUrl, long position, long duration) {
+        List<Record> list = list(ctx);
+        boolean changed = false;
+        for (Record r : list) {
+            if (r.siteKey.equals(siteKey) && r.vodId.equals(vodId) && r.epUrl.equals(epUrl)) {
+                r.position = position;
+                r.duration = duration;
+                changed = true;
+                break;
+            }
+        }
+        if (changed) save(ctx, list);
     }
 
     private static void save(Context ctx, List<Record> list) {
