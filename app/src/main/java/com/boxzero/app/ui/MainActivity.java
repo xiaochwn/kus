@@ -89,6 +89,15 @@ public class MainActivity extends AppCompatActivity {
 
         siteName = findViewById(R.id.siteName);
         banner = findViewById(R.id.banner);
+        { // AVBox hero height: 58% of screen height, clamped [360,560]dp
+            android.view.View wrap = findViewById(R.id.bannerWrap);
+            float sh = getResources().getDisplayMetrics().heightPixels
+                    / getResources().getDisplayMetrics().density;
+            float h = Math.max(360f, Math.min(560f, sh * 0.58f));
+            android.view.ViewGroup.LayoutParams lp = wrap.getLayoutParams();
+            lp.height = (int) (h * getResources().getDisplayMetrics().density);
+            wrap.setLayoutParams(lp);
+        }
         bannerTitle = findViewById(R.id.bannerTitle);
         bannerScore = findViewById(R.id.bannerScore);
         dots = findViewById(R.id.dots);

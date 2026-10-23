@@ -59,7 +59,7 @@
                             android:layout_height="wrap_content"
                             android:text="kus"
                             android:textColor="#8B5E34"
-                            android:textSize="30sp"
+                            android:textSize="24sp"
                             android:textStyle="bold" />
 
                         <TextView
@@ -85,8 +85,8 @@
                     android:paddingBottom="12dp">
 
                     <ImageView
-                        android:layout_width="40dp"
-                        android:layout_height="40dp"
+                        android:layout_width="28dp"
+                        android:layout_height="28dp"
                         android:src="@drawable/ic_chip" />
 
                     <LinearLayout
@@ -108,7 +108,7 @@
                             android:layout_height="wrap_content"
                             android:text="0.53"
                             android:textColor="#8B5E34"
-                            android:textSize="20sp"
+                            android:textSize="16sp"
                             android:textStyle="bold" />
                     </LinearLayout>
                 </LinearLayout>

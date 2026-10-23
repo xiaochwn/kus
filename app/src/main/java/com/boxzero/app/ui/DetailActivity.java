@@ -79,6 +79,15 @@ contentView = findViewById(R.id.content);
 btnExpand = findViewById(R.id.btnExpand);
 srcRow = findViewById(R.id.srcRow);
 epGrid = findViewById(R.id.epGrid);
+        { // AVBox detail hero: 50% of screen height, clamped [280,460]dp
+            android.view.View wrap = findViewById(R.id.backdropWrap);
+            float sh = getResources().getDisplayMetrics().heightPixels
+                    / getResources().getDisplayMetrics().density;
+            float h = Math.max(280f, Math.min(460f, sh * 0.50f));
+            android.view.ViewGroup.LayoutParams lp = wrap.getLayoutParams();
+            lp.height = (int) (h * getResources().getDisplayMetrics().density);
+            wrap.setLayoutParams(lp);
+        }
 btnReverse = findViewById(R.id.btnReverse);
 btnStar = findViewById(R.id.btnStar);
 
@@ -116,7 +125,9 @@ btnExpand.setText(expanded? "收起 ▴": "展开 ▾");
 });
 btnReverse.setOnClickListener(v -> {
 reversed =!reversed;
-btnReverse.setText(reversed? "↑ 正序": "↓ 倒序");
+btnReverse.setText(reversed? "正序": "倒序");
+btnReverse.setCompoundDrawablesWithIntrinsicBounds(
+reversed? R.drawable.ic_order_asc: R.drawable.ic_reverse, 0, 0, 0);
 renderEpisodes();
 });
 

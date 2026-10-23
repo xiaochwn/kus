@@ -15,42 +15,57 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- banner carousel (top bar floats over it) -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/banner"
+            <!-- banner carousel (top bar floats over it; caption overlays bottom) -->
+            <FrameLayout
+                android:id="@+id/bannerWrap"
                 android:layout_width="match_parent"
-                android:layout_height="370dp"
-                android:layout_marginTop="0dp"
-                android:clipToPadding="false" />
+                android:layout_height="440dp">
 
-            <TextView
-                android:id="@+id/bannerTitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                android:ellipsize="end"
-                android:gravity="center"
-                android:maxLines="1"
-                android:textColor="#222222"
-                android:textSize="22sp"
-                android:textStyle="bold" />
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/banner"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:clipToPadding="false" />
 
-            <TextView
-                android:id="@+id/bannerScore"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:gravity="center"
-                android:textColor="#777777"
-                android:textSize="15sp" />
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="bottom"
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:paddingBottom="12dp"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp">
 
-            <LinearLayout
-                android:id="@+id/dots"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:gravity="center"
-                android:orientation="horizontal" />
+                    <TextView
+                        android:id="@+id/bannerTitle"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:gravity="center"
+                        android:maxLines="1"
+                        android:textColor="#222222"
+                        android:textSize="24sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:id="@+id/bannerScore"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:gravity="center"
+                        android:textColor="#222222"
+                        android:textSize="16sp" />
+
+                    <LinearLayout
+                        android:id="@+id/dots"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:gravity="center"
+                        android:orientation="horizontal" />
+                </LinearLayout>
+            </FrameLayout>
 
             <!-- categories -->
             <TextView
@@ -116,24 +131,25 @@
             android:id="@+id/sitePill"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:minHeight="44dp"
             android:background="@drawable/pill_bg_light"
             android:gravity="center_vertical"
             android:orientation="horizontal"
-            android:paddingStart="14dp"
-            android:paddingEnd="14dp"
-            android:paddingTop="10dp"
-            android:paddingBottom="10dp">
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
 
             <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
                 android:src="@drawable/ic_equalizer" />
 
             <TextView
                 android:id="@+id/siteName"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="6dp"
                 android:ellipsize="end"
                 android:maxWidth="170dp"
                 android:singleLine="true"
@@ -142,13 +158,11 @@
                 android:textSize="14sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="4dp"
-                android:text="▾"
-                android:textColor="#333333"
-                android:textSize="12sp" />
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_marginStart="2dp"
+                android:src="@drawable/ic_arrow_down" />
         </LinearLayout>
 
         <View
@@ -156,24 +170,31 @@
             android:layout_height="1dp"
             android:layout_weight="1" />
 
-        <ImageButton
-            android:id="@+id/btnMenu"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginEnd="8dp"
-            android:background="@drawable/circle_frosted"
-            android:contentDescription="菜单"
-            android:padding="12dp"
-            android:src="@android:drawable/ic_menu_more" />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:background="@drawable/pill_bg_light"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
 
-        <ImageButton
-            android:id="@+id/btnSearch"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:background="@drawable/circle_frosted"
-            android:contentDescription="搜索"
-            android:padding="12dp"
-            android:src="@android:drawable/ic_menu_search" />
+            <ImageButton
+                android:id="@+id/btnMenu"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="菜单"
+                android:padding="11dp"
+                android:src="@android:drawable/ic_menu_more" />
+
+            <ImageButton
+                android:id="@+id/btnSearch"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="搜索"
+                android:padding="11dp"
+                android:src="@android:drawable/ic_menu_search" />
+        </LinearLayout>
     </LinearLayout>
 
     <include
