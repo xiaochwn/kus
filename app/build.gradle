@@ -1,0 +1,62 @@
+plugins {
+    alias(libs.plugins.android.application)
+    alias(libs.plugins.chaquopy)
+}
+
+android {
+    namespace = "com.boxzero.app"
+    compileSdk = 35
+
+    defaultConfig {
+        applicationId = "com.boxzero.app"
+        minSdk = 24
+        targetSdk = 35
+        versionCode = 1
+        versionName = "0.1"
+
+        ndk {
+            abiFilters "arm64-v8a", "armeabi-v7a"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled = false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    buildFeatures {
+        buildConfig = true
+    }
+}
+
+// Chaquopy: embeds a Python interpreter so .py spiders run on-device.
+// Wheels are fetched from Chaquopy's own Maven repo at build time.
+python {
+    pip {
+        install "requests"
+        install "lxml"
+        install "beautifulsoup4"
+        install "pyquery"
+        install "pycryptodome"
+    }
+}
+
+dependencies {
+    implementation(libs.appcompat)
+    implementation(libs.material)
+    implementation(libs.recyclerview)
+    implementation(libs.constraintlayout)
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.ui)
+    implementation(libs.media3.datasource)
+    implementation(libs.okhttp)
+    implementation(libs.gson)
+    implementation(libs.glide)
+    annotationProcessor(libs.glide.compiler)
+}
