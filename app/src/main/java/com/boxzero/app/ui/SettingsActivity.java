@@ -22,10 +22,14 @@ public class SettingsActivity extends AppCompatActivity {
         EditText input = findViewById(R.id.configInput);
         input.setText(Prefs.configUrl(this));
 
+        EditText tmdbInput = findViewById(R.id.tmdbInput);
+        tmdbInput.setText(Prefs.tmdbKey(this));
+
         Button save = findViewById(R.id.btnSave);
         save.setOnClickListener(v -> {
             String url = input.getText().toString().trim();
             Prefs.configUrl(this, url);
+            Prefs.tmdbKey(this, tmdbInput.getText().toString());
             Toast.makeText(this, url.isEmpty() ? "已切换为内置演示源" : "已保存", Toast.LENGTH_SHORT).show();
             finish();
         });

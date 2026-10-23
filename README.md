@@ -73,9 +73,9 @@ class Spider(Spider):
 - 播放历史（自动记录，点击续播）/ 收藏 / 直播（txt / m3u / JSON）/ 我的（接口设置）
 - 毛玻璃底部导航：首页 / 收藏 / 历史 / 直播 / 我的
 - py spider + jar spider（csp_*）、本地代理（localProxy）
+- TMDB 静默刮削：详情页海报/简介缺失时自动后台补全（需自备 API Key），无弹窗无提示
 
 ## TODO（v1 之后）
 
 - XPath 站点（type 0）和采集站（type 1）
 - 选集记忆（看到第几集）
-- TMDB 刮削补海报简介
