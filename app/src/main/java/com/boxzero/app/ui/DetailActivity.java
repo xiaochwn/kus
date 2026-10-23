@@ -1,10 +1,8 @@
 package com.boxzero.app.ui;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.view.View;
 import android.widget.Button;
 import android.widget.GridLayout;
 import android.widget.ImageView;
@@ -15,6 +13,9 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.boxzero.app.R;
+import com.boxzero.app.core.FavStore;
+import com.boxzero.app.core.HistoryStore;
+import com.boxzero.app.core.PlayerLauncher;
 import com.boxzero.app.core.Site;
 import com.boxzero.app.core.SpiderLoader;
 import com.boxzero.app.core.Vod;
@@ -30,16 +31,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
-
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
 public class DetailActivity extends AppCompatActivity {
 
     private ImageView poster;
     private TextView title, remarks, content;
+    private Button btnFav;
     private LinearLayout srcRow;
     private GridLayout epGrid;
 
@@ -48,6 +45,8 @@ public class DetailActivity extends AppCompatActivity {
     private final Gson gson = new Gson();
 
     private Site site;
+    private String siteKey;
+    private String vodId;
     private Vod vod;
     private List<Vod.Src> sources = new ArrayList<>();
 
@@ -60,16 +59,19 @@ public class DetailActivity extends AppCompatActivity {
         title = findViewById(R.id.title);
         remarks = findViewById(R.id.remarks);
         content = findViewById(R.id.content);
+        btnFav = findViewById(R.id.btnFav);
         srcRow = findViewById(R.id.srcRow);
         epGrid = findViewById(R.id.epGrid);
 
-        String siteKey = getIntent().getStringExtra("siteKey");
-        String vodId = getIntent().getStringExtra("vodId");
+        siteKey = getIntent().getStringExtra("siteKey");
+        vodId = getIntent().getStringExtra("vodId");
         site = SpiderLoader.get().getConfig().find(siteKey);
         if (site == null) {
             finish();
             return;
         }
+
+        btnFav.setOnClickListener(v -> toggleFav());
         loadDetail(vodId);
     }
 
@@ -100,6 +102,7 @@ public class DetailActivity extends AppCompatActivity {
         remarks.setText(vod.vodRemarks == null ? "" : vod.vodRemarks);
         content.setText(vod.vodContent == null ? "" : vod.vodContent.replaceAll("<.*?>", ""));
         Glide.with(this).load(vod.vodPic).into(poster);
+        refreshFavButton();
 
         sources = vod.parseSources();
         srcRow.removeAllViews();
@@ -113,6 +116,23 @@ public class DetailActivity extends AppCompatActivity {
             srcRow.addView(b);
         }
         if (!sources.isEmpty()) renderEpisodes(0);
+    }
+
+    private void refreshFavButton() {
+        boolean faved = FavStore.isFav(this, siteKey, vodId);
+        btnFav.setText(faved ? "★ 已收藏" : "☆ 收藏");
+    }
+
+    private void toggleFav() {
+        if (vod == null) return;
+        FavStore.Item item = new FavStore.Item();
+        item.siteKey = siteKey;
+        item.vodId = vodId;
+        item.vodName = vod.vodName;
+        item.vodPic = vod.vodPic;
+        boolean nowFaved = FavStore.toggle(this, item);
+        refreshFavButton();
+        Toast.makeText(this, nowFaved ? "已收藏" : "已取消收藏", Toast.LENGTH_SHORT).show();
     }
 
     private void renderEpisodes(int srcIndex) {
@@ -132,69 +152,16 @@ public class DetailActivity extends AppCompatActivity {
     }
 
     private void play(String flag, Vod.Ep ep) {
-        Toast.makeText(this, "解析中…", Toast.LENGTH_SHORT).show();
-        io.execute(() -> {
-            try {
-                Spider spider = SpiderLoader.get().spider(site);
-                String json = spider.playerContent(flag, ep.url, new ArrayList<>());
-                JSONObject o = new JSONObject(json);
-                int parse = o.optInt("parse", 0);
-                String url = o.optString("url", "");
-                String header = o.optJSONObject("header") != null ? o.optJSONObject("header").toString() : "{}";
-                if (parse == 1) {
-                    String resolved = tryParse(url);
-                    if (resolved != null) url = resolved;
-                }
-                if (url.isEmpty()) throw new Exception("empty play url");
-                Intent it = new Intent(this, PlayerActivity.class);
-                it.putExtra("url", url);
-                it.putExtra("headers", header);
-                it.putExtra("title", vod.vodName + " " + ep.name);
-                startActivity(it);
-            } catch (Exception e) {
-                e.printStackTrace();
-                main.post(() -> Toast.makeText(this, "播放解析失败: " + e.getMessage(), Toast.LENGTH_LONG).show());
-            }
-        });
-    }
-
-    /**
-     * Best-effort handling for parse==1 play URLs using the config's "parses".
-     * type 0: concatenate parse.url + playUrl; type 1: fetch JSON, take "url".
-     * (Full WebView sniffing is a TODO.)
-     */
-    private String tryParse(String playUrl) {
-        try {
-            JSONArray arr = new JSONArray(SpiderLoader.get().getConfig().rawParses);
-            for (int i = 0; i < arr.length(); i++) {
-                JSONObject p = arr.getJSONObject(i);
-                int type = p.optInt("type", -1);
-                String base = p.optString("url", "");
-                if (base.isEmpty()) continue;
-                if (type == 0) return base + playUrl;
-                if (type == 1) {
-                    String body = httpGet(base + playUrl);
-                    String u = new JSONObject(body).optString("url", "");
-                    if (!u.isEmpty()) return u;
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    private String httpGet(String url) throws Exception {
-        OkHttpClient client = new OkHttpClient.Builder()
-                .connectTimeout(15, TimeUnit.SECONDS)
-                .readTimeout(20, TimeUnit.SECONDS)
-                .build();
-        Request req = new Request.Builder().url(url)
-                .header("User-Agent", "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36").build();
-        try (Response resp = client.newCall(req).execute()) {
-            if (resp.body() == null) throw new Exception("HTTP " + resp.code());
-            return resp.body().string();
-        }
+        HistoryStore.Record r = new HistoryStore.Record();
+        r.siteKey = siteKey;
+        r.vodId = vodId;
+        r.vodName = vod.vodName;
+        r.vodPic = vod.vodPic;
+        r.flag = flag;
+        r.epName = ep.name;
+        r.epUrl = ep.url;
+        HistoryStore.add(this, r);
+        PlayerLauncher.play(this, site, flag, ep.url, vod.vodName + " " + ep.name);
     }
 
     @Override

@@ -25,6 +25,7 @@ public class BoxConfig {
 
     public String jarUrl = "";
     public String rawParses = "[]";
+    public String livesRaw = "";
     public final List<Site> sites = new ArrayList<>();
 
     public static BoxConfig load(String url) throws Exception {
@@ -58,6 +59,13 @@ public class BoxConfig {
         cfg.jarUrl = root.optString("spider", "");
         JSONArray parses = root.optJSONArray("parses");
         if (parses != null) cfg.rawParses = parses.toString();
+        // "lives": URL string, inline text, or [{"name":..,"url":..}] array.
+        Object lives = root.opt("lives");
+        if (lives instanceof JSONArray) {
+            cfg.livesRaw = lives.toString();
+        } else if (lives instanceof String) {
+            cfg.livesRaw = (String) lives;
+        }
         JSONArray arr = root.optJSONArray("sites");
         Gson gson = new Gson();
         if (arr != null) {

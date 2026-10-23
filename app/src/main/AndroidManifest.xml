@@ -30,6 +30,15 @@
         <activity
             android:name=".ui.SettingsActivity"
             android:exported="false" />
+        <activity
+            android:name=".ui.SniffActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.RecordsActivity"
+            android:exported="false" />
+        <activity
+            android:name=".ui.LiveActivity"
+            android:exported="false" />
 
     </application>
 

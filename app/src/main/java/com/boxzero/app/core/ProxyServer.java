@@ -160,8 +160,12 @@ public class ProxyServer {
     private byte[] toBytes(Object o) {
         if (o instanceof byte[]) return (byte[]) o;
         if (o instanceof InputStream) {
-            try (InputStream in = (InputStream) o) {
-                return in.readAllBytes();
+            try (InputStream in = (InputStream) o;
+                 java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+                byte[] buf = new byte[8192];
+                int n;
+                while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+                return out.toByteArray();
             } catch (IOException e) {
                 return new byte[0];
             }
